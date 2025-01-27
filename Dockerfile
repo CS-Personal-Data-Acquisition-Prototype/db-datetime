@@ -1,17 +1,16 @@
-FROM archlinux/archlinux:latest
-LABEL Name="PDA-DB-MANAGEMENT-DevContainer"
+FROM rust:1.84.0-alpine
 
 VOLUME [ "/data" ]
 
-RUN pacman -Syu
-RUN pacman -S rust --noconfirm
+WORKDIR /data
 
 ARG USER=runUser
 ARG UID=1001
 ARG GID=1001
 
-RUN groupadd -g ${GID} -o ${USER}
-RUN useradd -u ${UID} -g ${GID} -s /bin/bash ${USER}
+RUN addgroup -g ${GID} ${USER}
+RUN adduser -H -D -s /bin/sh -G ${USER} -u ${UID} ${USER}
 
 USER ${UID}:${GID}
-CMD [ "/bin/bash" ]
+
+CMD [ "/bin/sh" ]
