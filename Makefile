@@ -1,5 +1,5 @@
 IMAGENAME = pda-db/devcontainer
-VOLUME = --volume ./src:/data
+VOLUME = --volume ./crate:/data
 USER = --build-arg USER=$$(whoami) \
 	--build-arg UID=$$(id -u) \
 	--build-arg GID=$$(id -g)

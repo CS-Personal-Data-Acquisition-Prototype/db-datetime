@@ -1,5 +1,4 @@
 # SQLite Custom DateTime Datatype Implementation
----
 
 This repository contains a demonstration for the custom SQLite datetime implementation for the Personal Data Aquisition Device CS46X.
 
@@ -27,7 +26,15 @@ make run
 ```
 
 ### Local Rust installation
-#### Inside `/src` run:
+#### Inside `/crate` run:
 ```sh
 cargo run
 ```
+
+## TODO List
+- [ ] Create array of mock entries
+- [ ] Create Sensor_Session_Data table
+- [ ] Fill with entries
+- [ ] Print table
+- [ ] Get entries from table
+- [ ] Print Entries
