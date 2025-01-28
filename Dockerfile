@@ -1,5 +1,7 @@
 FROM rust:1.84.0-alpine
 
+RUN apk update && apk add libc-dev
+
 VOLUME [ "/data" ]
 
 WORKDIR /data
