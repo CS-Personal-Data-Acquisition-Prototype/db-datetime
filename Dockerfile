@@ -1,6 +1,6 @@
 FROM rust:1.84.0-alpine
 
-RUN apk update && apk add libc-dev
+RUN apk update && apk add libc-dev bash
 
 VOLUME [ "/data" ]
 

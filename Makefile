@@ -1,23 +1,24 @@
-DOCKERRUN = docker run --rm
+DOCKERRUN = docker run --rm -t
 IMAGENAME = pda-db/devcontainer
 VOLUME = --volume ./crate:/data
 USER = --build-arg USER=$$(whoami) \
 	--build-arg UID=$$(id -u) \
 	--build-arg GID=$$(id -g)
 
-.phony: run cli image clean
+run: .image
+	$(DOCKERRUN) $(VOLUME) $(IMAGENAME) /bin/bash -c "cargo run"
 
-run:
-	$(DOCKERRUN) $(VOLUME) $(IMAGENAME) /bin/sh -c "cargo run"
+build: .image
+	$(DOCKERRUN) $(VOLUME) $(IMAGENAME) /bin/bash -c "cargo build"
 
-build:
-	$(DOCKERRUN) $(VOLUME) $(IMAGENAME) /bin/sh -c "cargo build"
+.image: Dockerfile
+	docker build $(USER) --tag $(IMAGENAME) . &&\
+	touch .image
 
-cli: image
-	$(DOCKERRUN) $(VOLUME) $(IMAGENAME)
+.phony: cli clean
 
-image: Dockerfile
-	docker build $(USER) --tag $(IMAGENAME) .
+cli: .image
+	$(DOCKERRUN) -i $(VOLUME) $(IMAGENAME) /bin/bash
 
 clean:
-	rm -rfv ./crate/target
+	rm -rfv ./crate/target .image
