@@ -10,6 +10,8 @@ I've gone to the length of setting up a docker development container for my own 
 
 Rust provides a built in way to get the epoch in ns from the system time. Using this, we can easily cast that value to an unsigned 64 bit data type and save it to an 8-byte integer column in the database.
 
+So far, it basically seems that we'll be ignoring SQLite's built-in datetime functions and supplementing them with our own outside the database. Pretty simple.
+
 ## Setup Instructions
 ### Local Rust installation
 #### Requirements
@@ -47,9 +49,8 @@ docker run --rm --volume .\crate:/data pda-db/devcontainer /bin/sh -c "cargo bui
 ```
 
 ## TODO List
-- [ ] Create array of mock entries
-- [ ] Create Sensor_Session_Data table
-- [ ] Fill with entries
-- [ ] Print table
+- [X] Create array of mock entries
+- [X] Create Sensor_Session_Data table
+- [X] Fill with entries
 - [ ] Get entries from table
 - [ ] Print Entries
