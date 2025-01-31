@@ -1,11 +1,13 @@
-use rusqlite::{Connection, Result};
+use std::collections::LinkedList;
+
+use rusqlite::{params, Connection, Result};
 
 // #[derive(Debug)]
-// struct SessionSensorData {
-//     datetime: u64,
-//     name: String,
-//     data: Option<Vec<u8>>,
-// }
+struct SessionSensorData {
+    datetime: u64,
+    session_sensor_id: u8,
+    data: String,
+}
 
 fn get_epoch_ns() -> u64 {
     let since_epoch = std::time::SystemTime::now()
@@ -15,19 +17,104 @@ fn get_epoch_ns() -> u64 {
     return since_epoch as u64;
 }
 
+fn create_table(conn: &Connection) -> () {
+    // Create a table for our data
+    conn.execute(
+        "
+        CREATE TABLE IF NOT EXISTS Session_Sensor_Data (
+            datetime INTEGER,
+            session_sensor_id INTEGER,
+            data_blob BLOB,
+            PRIMARY KEY (datetime, session_sensor_id)
+        )",
+        [],
+    )
+    .unwrap();
+}
+
+fn create_sample_lines(count: i32) -> LinkedList<SessionSensorData> {
+    // Create a ton of sample lines
+    let mut lines: LinkedList<SessionSensorData> = LinkedList::new();
+
+    for _ in 1..=count {
+        // Get the current time
+        let currtime = get_epoch_ns();
+        // Create a line
+        lines.push_back(SessionSensorData {
+            datetime: currtime,
+            session_sensor_id: 1u8,    // Sample ID
+            data: String::from("foo"), // Sample BLOB will have a string
+        });
+    }
+
+    return lines;
+}
+
+fn insert_lines(conn: &Connection, lines: LinkedList<SessionSensorData>) -> () {
+    // Insert lines into table
+    for line in lines {
+        conn.execute(
+            "
+        INSERT INTO Session_Sensor_Data
+            (datetime, session_sensor_id, data_blob)
+            VALUES (?1, ?2, ?3)
+        ",
+            params![line.datetime, line.session_sensor_id, line.data.as_bytes()],
+        )
+        .unwrap();
+    }
+    println!("Done");
+}
+
+fn print_lines(conn: &Connection, count: i32) -> () {
+    println!("First {} Table \"Session_Sensor_Data\" Rows:", count);
+    let mut get_stmt = conn
+        .prepare(
+            format!(
+                "
+            SELECT ALL * FROM Session_Sensor_Data
+                ORDER BY datetime ASC LIMIT {}
+            ",
+                count
+            )
+            .as_str(),
+        )
+        .unwrap();
+
+    let response = get_stmt.query_map([], |row| {
+        Ok(SessionSensorData {
+            datetime: row.get(0)?,
+            session_sensor_id: row.get(1)?,
+            data: row.get(2)?,
+        })
+    });
+
+    // TODO print these lines all pretty
+}
+
 fn main() -> Result<()> {
+    // Print current EPOCH for funzies
+    let curr_ns = get_epoch_ns();
+    println!("NS since UNIX EPOCH: {}", curr_ns);
+
+    // Open a database in memory
     let conn = Connection::open_in_memory()?;
 
-    // conn.execute(
-    //     "CREATE TABLE IF NOT EXISTS Session_Sensor_Data (
-    //         datetime INTEGER primary key,
-    //         session_sensorID INTEGER primary key
-    // ",
-    //     [],
-    // );
+    // Create the main table
+    create_table(&conn);
 
-    let curr_ns = get_epoch_ns();
-    println!("{}", curr_ns);
+    // Create a ton of lines
+    let count = 1000;
+    let new_lines: LinkedList<SessionSensorData>;
+    new_lines = create_sample_lines(count);
+
+    // Insert Table lines
+    println!("Inserting {} lines...", count);
+    insert_lines(&conn, new_lines);
+
+    // Print table lines
+    let print_count = 15;
+    print_lines(&conn, print_count);
 
     return Ok(());
 }
