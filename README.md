@@ -52,5 +52,5 @@ docker run --rm --volume .\crate:/data pda-db/devcontainer /bin/sh -c "cargo bui
 - [X] Create array of mock entries
 - [X] Create Sensor_Session_Data table
 - [X] Fill with entries
-- [ ] Get entries from table
+- [X] Get entries from table
 - [ ] Print Entries
