@@ -7,10 +7,20 @@ The Purpose of this implementation is to achieve a timing resolution of at least
 I've gone to the length of setting up a docker development container for my own learning.
 
 ## Setup Instructions
+### Local Rust installation
+#### Requirements
+- Rust
+
+#### Inside `/crate` run either:
+```sh
+cargo build
+cargo run
+```
+
 ### Docker Dev Container
 #### Requirements:
 - Some form of linux shell
-- make
+- Make
 - Functional Docker installation
 
 #### Available from project root `/`:
@@ -24,11 +34,12 @@ make build
 # Run the project
 make run
 ```
-
-### Local Rust installation
-#### Inside `/crate` run:
+#### Windows option:
 ```sh
-cargo run
+# Build the Docker image
+docker build .
+# Build & Run the containerized application
+docker run --rm --volume .\crate:/data pda-db/devcontainer /bin/sh -c "cargo build && cargo run"
 ```
 
 ## TODO List
