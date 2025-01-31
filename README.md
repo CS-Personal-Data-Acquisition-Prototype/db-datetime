@@ -6,6 +6,10 @@ The Purpose of this implementation is to achieve a timing resolution of at least
 
 I've gone to the length of setting up a docker development container for my own learning.
 
+## Summary
+
+Rust provides a built in way to get the epoch in ns from the system time. Using this, we can easily cast that value to an unsigned 64 bit data type and save it to an 8-byte integer column in the database.
+
 ## Setup Instructions
 ### Local Rust installation
 #### Requirements
