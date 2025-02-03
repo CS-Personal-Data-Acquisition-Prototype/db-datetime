@@ -1,8 +1,9 @@
 use std::collections::LinkedList;
 
 use rusqlite::{params, Connection, Result};
+use tabled::builder::Builder;
 
-// #[derive(Debug)]
+#[derive(Debug)]
 struct SessionSensorData {
     datetime: u64,
     session_sensor_id: u8,
@@ -36,60 +37,79 @@ fn create_sample_lines(count: i32) -> LinkedList<SessionSensorData> {
     // Create a ton of sample lines
     let mut lines: LinkedList<SessionSensorData> = LinkedList::new();
 
-    for _ in 1..=count {
+    for i in 1..=count {
         // Get the current time
         let currtime = get_epoch_ns();
         // Create a line
         lines.push_back(SessionSensorData {
             datetime: currtime,
-            session_sensor_id: 1u8,    // Sample ID
-            data: String::from("foo"), // Sample BLOB will have a string
+            session_sensor_id: 1u8,                  // Sample ID
+            data: String::from(format!("foo{}", i)), // Sample BLOB will have a string
         });
     }
 
     return lines;
 }
 
-fn insert_lines(conn: &Connection, lines: LinkedList<SessionSensorData>) -> () {
+fn insert_lines(conn: &Connection, lines: LinkedList<SessionSensorData>) -> Result<()> {
     // Insert lines into table
     for line in lines {
+        print!(".");
+
         conn.execute(
             "
         INSERT INTO Session_Sensor_Data
             (datetime, session_sensor_id, data_blob)
             VALUES (?1, ?2, ?3)
         ",
-            params![line.datetime, line.session_sensor_id, line.data.as_bytes()],
-        )
-        .unwrap();
+            params![line.datetime, line.session_sensor_id, line.data],
+        )?;
     }
-    println!("Done");
+
+    println!("\nAffected {} Rows.", conn.changes());
+
+    return Ok(());
 }
 
-fn print_lines(conn: &Connection, count: i32) -> () {
+fn print_lines(conn: &Connection, count: i32) -> Result<()> {
     println!("First {} Table \"Session_Sensor_Data\" Rows:", count);
-    let mut get_stmt = conn
-        .prepare(
-            format!(
-                "
+    let mut stmt = conn.prepare(
+        format!(
+            "
             SELECT ALL * FROM Session_Sensor_Data
                 ORDER BY datetime ASC LIMIT {}
             ",
-                count
-            )
-            .as_str(),
+            count
         )
-        .unwrap();
+        .as_str(),
+    )?;
 
-    let response = get_stmt.query_map([], |row| {
+    let line_iter = stmt.query_map([], |row| {
         Ok(SessionSensorData {
             datetime: row.get(0)?,
             session_sensor_id: row.get(1)?,
             data: row.get(2)?,
         })
-    });
+    })?;
+
+    let mut builder = Builder::new();
+    builder.push_record(["datetime", "session_sensor_id", "data"]);
+
+    for item in line_iter {
+        let content = item?;
+        let datetime = format!("{}", content.datetime);
+        let session_sensor_id = format!("{}", content.session_sensor_id);
+        let data = format!("{}", content.data);
+        builder.push_record([datetime, session_sensor_id, data]);
+    }
+
+    let table = builder.build();
+
+    println!("{}", table);
 
     // TODO print these lines all pretty
+
+    return Ok(());
 }
 
 fn main() -> Result<()> {
@@ -110,11 +130,12 @@ fn main() -> Result<()> {
 
     // Insert Table lines
     println!("Inserting {} lines...", count);
-    insert_lines(&conn, new_lines);
+    insert_lines(&conn, new_lines)?;
+    println!("Done");
 
     // Print table lines
     let print_count = 15;
-    print_lines(&conn, print_count);
+    print_lines(&conn, print_count)?;
 
     return Ok(());
 }
