@@ -54,8 +54,6 @@ fn create_sample_lines(count: i32) -> LinkedList<SessionSensorData> {
 fn insert_lines(conn: &Connection, lines: LinkedList<SessionSensorData>) -> Result<()> {
     // Insert lines into table
     for line in lines {
-        print!(".");
-
         conn.execute(
             "
         INSERT INTO Session_Sensor_Data
@@ -66,13 +64,13 @@ fn insert_lines(conn: &Connection, lines: LinkedList<SessionSensorData>) -> Resu
         )?;
     }
 
-    println!("\nAffected {} Rows.", conn.changes());
-
     return Ok(());
 }
 
 fn print_lines(conn: &Connection, count: i32) -> Result<()> {
     println!("First {} Table \"Session_Sensor_Data\" Rows:", count);
+
+    // Prepare a select statement from the database
     let mut stmt = conn.prepare(
         format!(
             "
@@ -84,6 +82,7 @@ fn print_lines(conn: &Connection, count: i32) -> Result<()> {
         .as_str(),
     )?;
 
+    // Execute the query statement and put the results into a SessionSensorData struct
     let line_iter = stmt.query_map([], |row| {
         Ok(SessionSensorData {
             datetime: row.get(0)?,
@@ -92,9 +91,11 @@ fn print_lines(conn: &Connection, count: i32) -> Result<()> {
         })
     })?;
 
+    // Initialize the table builder
     let mut builder = Builder::new();
     builder.push_record(["datetime", "session_sensor_id", "data"]);
 
+    // Collect each record into &str format and push them into the table builder
     for item in line_iter {
         let content = item?;
         let datetime = format!("{}", content.datetime);
@@ -103,11 +104,9 @@ fn print_lines(conn: &Connection, count: i32) -> Result<()> {
         builder.push_record([datetime, session_sensor_id, data]);
     }
 
+    // Build and print the table
     let table = builder.build();
-
     println!("{}", table);
-
-    // TODO print these lines all pretty
 
     return Ok(());
 }
